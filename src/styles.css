@@ -1,0 +1,1478 @@
+:root {
+  --gold: #ffcf6b;
+  --gold-deep: #e8902a;
+  --ink: #1a0f2e;
+  --cream: #fff1d6;
+  --font: 'Baloo 2', 'Kohinoor Devanagari', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --shop-w: clamp(230px, 25vw, 380px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scene layers                                                        */
+/* ------------------------------------------------------------------ */
+
+#scene {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  --road-top: 74vh;
+  --road-bottom: 96vh;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.layer-sky {
+  background: linear-gradient(180deg, #0d0a26 0%, #2a1748 45%, #6a2f45 80%, #3a2430 100%);
+}
+
+.layer-street {
+  bottom: auto;
+  height: calc(var(--road-top) + 2px);
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+/* Drawn asphalt road below the street art: the drop zone. */
+.layer-road {
+  top: var(--road-top);
+  background:
+    radial-gradient(ellipse 30% 22% at 18% 0%, rgba(255, 170, 80, 0.16), transparent 70%),
+    radial-gradient(ellipse 30% 22% at 62% 0%, rgba(255, 170, 80, 0.14), transparent 70%),
+    radial-gradient(ellipse 30% 22% at 92% 0%, rgba(255, 170, 80, 0.12), transparent 70%),
+    linear-gradient(180deg, #57505a 0, #4a434d 5px, #1f1b24 6px, #2e2a33 30%, #35303a 65%, #2a2630 100%);
+  box-shadow: inset 0 12px 16px -8px rgba(0, 0, 0, 0.7);
+}
+
+.road-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 55%;
+  height: 3px;
+  opacity: 0.45;
+  background: repeating-linear-gradient(90deg, rgba(240, 220, 170, 0.8) 0 38px, transparent 38px 86px);
+}
+
+.road-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--road-top);
+  height: calc(var(--road-bottom) - var(--road-top));
+  pointer-events: none;
+  opacity: 0;
+  border-top: 2px dashed rgba(255, 210, 120, 0.5);
+  border-bottom: 2px dashed rgba(255, 210, 120, 0.5);
+  background: linear-gradient(180deg, rgba(255, 190, 90, 0.05), rgba(255, 190, 90, 0.1));
+  transition: opacity 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+#scene.dragging .road-zone {
+  opacity: 1;
+}
+
+.road-zone.valid {
+  background: linear-gradient(180deg, rgba(255, 200, 100, 0.12), rgba(255, 200, 100, 0.2));
+  box-shadow: inset 0 0 40px rgba(255, 180, 80, 0.35);
+}
+
+.grade {
+  background: linear-gradient(180deg, rgba(255, 120, 60, 0.12) 0%, rgba(255, 170, 80, 0.12) 60%, rgba(140, 50, 130, 0.14) 100%);
+  mix-blend-mode: soft-light;
+}
+
+#fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vignette {
+  background: radial-gradient(ellipse 85% 80% at 50% 45%, transparent 55%, rgba(8, 2, 18, 0.6) 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Shop                                                                */
+/* ------------------------------------------------------------------ */
+
+#shop {
+  position: absolute;
+  left: max(8px, 1.2vw);
+  bottom: max(8px, 1.5vh, env(safe-area-inset-bottom));
+  width: var(--shop-w);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.shop-img {
+  display: block;
+  width: 100%;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+
+/* --shop-w is set from JS (Scene.layout, see SHOP_SCALE). The shelf never
+   shrinks below 5 x 56px touch targets, even if the stall image is narrower. */
+.shelf {
+  position: relative;
+  margin-top: -9%;
+  min-width: calc(5 * 56px + 4 * 6px + 16px);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(56px, 1fr));
+  gap: 6px;
+  padding: 8px 8px 9px;
+  border-radius: 10px;
+  border-top: 4px solid #b07a43;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.06) 0 2px, transparent 2px 22px),
+    linear-gradient(180deg, #8d5c33, #5d3a1e);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.55), inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+}
+
+.slot {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 4px 2px 3px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: grab;
+  touch-action: none;
+  color: var(--cream);
+  background: radial-gradient(circle at 50% 35%, rgba(255, 214, 140, 0.28), rgba(0, 0, 0, 0.28) 75%);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.slot:hover,
+.slot:focus-visible {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(255, 207, 107, 0.7), 0 0 18px rgba(255, 180, 80, 0.45);
+  outline: none;
+}
+
+.slot:active {
+  cursor: grabbing;
+}
+
+.slot-art {
+  height: clamp(40px, 5.6vw, 76px);
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.slot-art img {
+  max-height: 100%;
+  max-width: 88%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+
+/* The flat chakri is very wide; keep its thumbnail visually balanced. */
+.slot[data-kind='chakri'] .slot-art img {
+  max-width: 70%;
+}
+
+/* The sparkler art is a diagonal stick; let it use the full cell. */
+.slot[data-kind='fuljhadi'] .slot-art img {
+  max-width: 100%;
+}
+
+.slot:hover .slot-art img {
+  transform: translateY(-3px) scale(1.07);
+}
+
+.slot.picked .slot-art img {
+  transform: scale(0.9);
+  opacity: 0.75;
+}
+
+.slot-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+.slot-label .hi {
+  font-size: clamp(12px, 1.1vw, 15px);
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.slot-label .en {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(10px, 0.85vw, 12px);
+  opacity: 0.92;
+}
+
+.slot.nope {
+  animation: nope 0.4s;
+}
+
+@keyframes nope {
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Radio prop                                                          */
+/* ------------------------------------------------------------------ */
+
+/* Wrapper is positioned (left/top) from JS; prop + mini dock move together. */
+.radio-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: clamp(148px, 18vw, 200px);
+  pointer-events: none;
+}
+
+.radio {
+  position: relative;
+  width: 100%;
+  max-width: clamp(64px, 8.5vw, 124px);
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.15s ease-out;
+}
+
+.radio.dragging {
+  cursor: grabbing;
+  transform: translateY(-6px) scale(1.08) rotate(-2deg);
+  transition: none;
+}
+
+.radio img {
+  display: block;
+  width: 100%;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
+  transition: filter 0.4s;
+  transform-origin: 50% 100%;
+}
+
+.radio.dragging img {
+  filter: drop-shadow(0 22px 18px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 10px rgba(255, 207, 107, 0.55));
+}
+
+.radio:hover img,
+.radio:focus-visible img {
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(255, 207, 107, 0.6));
+}
+
+.radio:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.radio.playing img {
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 14px rgba(255, 190, 90, 0.95));
+  animation: radio-bob 0.62s ease-in-out infinite alternate;
+}
+
+@keyframes radio-bob {
+  from { transform: scale(1, 1); }
+  to { transform: scale(1.025, 0.975); }
+}
+
+.radio .notes i {
+  position: absolute;
+  left: 40%;
+  top: 10%;
+  font-style: normal;
+  font-size: clamp(14px, 1.6vw, 22px);
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255, 180, 80, 0.9);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radio.playing .notes i {
+  animation: note 2.4s ease-out infinite;
+}
+
+.radio.playing .notes i:nth-child(2) { animation-delay: 0.8s; left: 60%; }
+.radio.playing .notes i:nth-child(3) { animation-delay: 1.6s; left: 25%; }
+
+@keyframes note {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(14px, -60px) rotate(18deg); }
+}
+
+/* Mini panel under the radio (visible when the full popup is closed). */
+.radio-dock {
+  margin-top: 4px;
+  padding: 6px 8px 7px;
+  border-radius: 10px;
+  color: #ffe9c4;
+  background:
+    repeating-linear-gradient(100deg, rgba(0, 0, 0, 0.05) 0 3px, transparent 3px 14px),
+    linear-gradient(180deg, #7a4626, #4a2812);
+  border: 2px solid #2e1708;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 220, 170, 0.2);
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.radio-dock.on .rd-led {
+  background: #7dff6a;
+  box-shadow: 0 0 8px #7dff6a;
+}
+
+.rd-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+.rd-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6b1d12;
+  box-shadow: inset 0 0 2px #000;
+  flex-shrink: 0;
+}
+
+.rd-brand {
+  flex: 1;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #e9c48a;
+}
+
+.rd-more {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #ffe9c4;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rd-more:hover,
+.rd-more:focus-visible {
+  background: rgba(255, 207, 107, 0.2);
+  outline: none;
+}
+
+.rd-title {
+  overflow: hidden;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffcf6b;
+  text-shadow: 0 0 4px rgba(255, 180, 70, 0.5);
+}
+
+.rd-title span {
+  display: inline-block;
+}
+
+.rd-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.rd-controls button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #2e1708;
+  background: radial-gradient(circle at 40% 35%, #f3dcae, #c9a26a 70%);
+  color: #3a1d0b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 0 #2e1708, 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+.rd-controls button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #2e1708;
+}
+
+.rd-controls .rd-play {
+  width: 34px;
+  height: 34px;
+}
+
+.rd-controls svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.rd-repeat {
+  position: relative;
+}
+
+.rd-repeat b {
+  position: absolute;
+  right: -2px;
+  top: -3px;
+  display: none;
+  min-width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  font-size: 8px;
+  line-height: 12px;
+  color: #3a1d0b;
+  background: #ffcf6b;
+}
+
+.rd-repeat[data-mode='one'] b {
+  display: block;
+}
+
+.rd-repeat:not([data-mode='off']) {
+  box-shadow: 0 2px 0 #2e1708, 0 0 10px rgba(255, 190, 80, 0.75);
+}
+
+/* ------------------------------------------------------------------ */
+/* Drag ghost                                                          */
+/* ------------------------------------------------------------------ */
+
+.drag-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  pointer-events: none;
+  will-change: transform;
+  filter: drop-shadow(0 22px 14px rgba(0, 0, 0, 0.5));
+  transition: opacity 0.15s;
+}
+
+.drag-ghost.invalid {
+  opacity: 0.8;
+}
+
+.drag-ghost.returning {
+  transition: transform 0.42s cubic-bezier(0.34, 1.3, 0.5, 1), opacity 0.42s ease-in;
+}
+
+/* ------------------------------------------------------------------ */
+/* Top bar, tip, toast                                                 */
+/* ------------------------------------------------------------------ */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left));
+  background: linear-gradient(180deg, rgba(10, 4, 20, 0.78), rgba(10, 4, 20, 0));
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brand-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.brand-sep {
+  font-weight: 800;
+  color: rgba(255, 207, 107, 0.55);
+  line-height: 1;
+}
+
+.logo {
+  height: clamp(36px, 7vh, 58px);
+  width: auto;
+  filter: drop-shadow(0 0 10px rgba(255, 150, 40, 0.5));
+}
+
+.brand-text {
+  font-weight: 800;
+  font-size: clamp(14px, 1.6vw, 20px);
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff2b0, #ffb52e 60%, #d4630f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* Rain toggle — gold accent so it reads apart from the purple utility buttons. */
+.tb-weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 200, 90, 0.55);
+  background: linear-gradient(180deg, rgba(80, 55, 20, 0.75), rgba(45, 28, 10, 0.85));
+  color: #ffe8b8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 10px rgba(255, 170, 50, 0.2);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.tb-weather svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.tb-weather:hover,
+.tb-weather:focus-visible {
+  border-color: rgba(255, 220, 130, 0.85);
+  background: linear-gradient(180deg, rgba(110, 75, 25, 0.85), rgba(60, 38, 12, 0.9));
+  box-shadow: 0 0 14px rgba(255, 190, 80, 0.45);
+  outline: none;
+}
+
+.tb-weather.on {
+  color: #fff6d8;
+  border-color: rgba(255, 230, 150, 0.95);
+  background: linear-gradient(180deg, rgba(200, 140, 40, 0.9), rgba(120, 70, 15, 0.95));
+  box-shadow: 0 0 16px rgba(255, 200, 80, 0.65), inset 0 1px 0 rgba(255, 240, 200, 0.25);
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 140, 0.35);
+  background: rgba(30, 14, 40, 0.65);
+  color: #ffe7b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+
+.tb-btn:hover,
+.tb-btn:focus-visible {
+  background: rgba(70, 30, 70, 0.75);
+  border-color: rgba(255, 210, 140, 0.7);
+  outline: none;
+}
+
+.tb-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.tb-mute[aria-pressed='true'] {
+  background: rgba(120, 30, 30, 0.7);
+  border-color: rgba(255, 120, 120, 0.6);
+}
+
+.tb-ambient.off {
+  opacity: 0.55;
+}
+
+.tip,
+.toast {
+  position: fixed;
+  left: 50%;
+  z-index: 15;
+  max-width: calc(100vw - 32px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(20, 8, 30, 0.78);
+  border: 1px solid rgba(255, 207, 107, 0.4);
+  color: #ffeac2;
+  font-size: clamp(12px, 1.3vw, 15px);
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -8px);
+  transition: opacity 0.4s, transform 0.4s;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.tip {
+  top: calc(max(6px, env(safe-area-inset-top)) + 64px);
+  /* left: 50% would otherwise cap the shrink-to-fit width at half the viewport. */
+  width: max-content;
+  border-radius: 18px;
+  line-height: 1.35;
+}
+
+.tip-spark {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px 3px rgba(255, 190, 90, 0.8);
+  vertical-align: middle;
+  animation: flicker 0.4s infinite alternate;
+}
+
+.toast {
+  top: calc(max(6px, env(safe-area-inset-top)) + 108px);
+}
+
+.tip.show,
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@keyframes flicker {
+  from { opacity: 0.6; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.1); }
+}
+
+/* Floating "Tap to light" tooltip over an unlit pataka (positioned from JS). */
+.light-hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(30, 10, 20, 0.82);
+  border: 1px solid rgba(255, 196, 92, 0.6);
+  box-shadow: 0 0 14px rgba(255, 170, 60, 0.35);
+  color: #ffe6b5;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  will-change: transform;
+}
+
+.light-hint::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: inherit;
+  border: inherit;
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(45deg);
+}
+
+.light-hint.show {
+  opacity: 1;
+}
+
+/* Social links: bottom-right, lifted above the docked shelf in portrait. */
+.social {
+  position: fixed;
+  z-index: 15;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--shelf-clearance, 0px));
+  display: flex;
+  gap: 10px;
+}
+
+.social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffe3b0;
+  background: rgba(36, 14, 24, 0.62);
+  border: 1px solid rgba(255, 207, 107, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  animation: social-glow 2.4s ease-in-out infinite alternate;
+}
+
+.social-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: currentColor;
+  transform-origin: center center;
+  animation: social-wobble 5s ease-in-out infinite;
+}
+
+.social-btn:hover,
+.social-btn:focus-visible {
+  color: var(--gold);
+  border-color: rgba(255, 207, 107, 0.9);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+@keyframes social-glow {
+  from {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.35),
+      0 0 10px rgba(255, 180, 70, 0.35);
+  }
+  to {
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.4),
+      0 0 22px rgba(255, 190, 90, 0.85),
+      0 0 36px rgba(255, 140, 50, 0.45);
+  }
+}
+
+@keyframes social-wobble {
+  0%,
+  100% {
+    transform: rotate(-30deg);
+  }
+  50% {
+    transform: rotate(30deg);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Start overlay                                                       */
+/* ------------------------------------------------------------------ */
+
+.start-fairy-lights {
+  position: absolute;
+  top: max(4px, env(safe-area-inset-top));
+  left: 0;
+  width: 100%;
+  height: 92px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.start-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(60, 20, 60, 0.72), rgba(6, 2, 14, 0.94));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  transition: opacity 0.6s;
+}
+
+.start-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Same social buttons as the main page, pinned to the overlay while entering. */
+.start-overlay .start-social {
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 1;
+}
+
+.start-card {
+  text-align: center;
+  max-width: 460px;
+}
+
+.start-logo {
+  display: block;
+  width: min(92vw, 420px);
+  height: auto;
+  margin: 4px auto 10px;
+  filter: drop-shadow(0 0 16px rgba(255, 150, 40, 0.55));
+}
+
+.start-overlay.logo-fallback .start-logo {
+  max-height: 72px;
+  width: auto;
+}
+
+.start-card p {
+  margin: 6px 0;
+  opacity: 0.9;
+  font-size: clamp(14px, 2.4vw, 16px);
+}
+
+.start-instructions {
+  margin: 14px 0 6px;
+  padding: 14px 18px;
+  font-family: var(--font);
+  font-size: clamp(15px, 2.9vw, 18px);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: #fff4dc;
+  opacity: 1;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(80, 28, 48, 0.55), rgba(40, 18, 52, 0.72));
+  border: 1px solid rgba(255, 207, 107, 0.42);
+  border-radius: 14px;
+  box-shadow:
+    0 0 24px rgba(255, 140, 50, 0.18),
+    inset 0 1px 0 rgba(255, 220, 160, 0.12);
+  text-shadow: 0 1px 12px rgba(255, 160, 60, 0.35);
+}
+
+.start-instructions strong {
+  font-weight: 800;
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 207, 107, 0.55);
+}
+
+.site-credit {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 241, 214, 0.78);
+}
+
+.topbar .brand-credit {
+  font-size: clamp(10px, 1.35vw, 12px);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.site-credit a {
+  pointer-events: auto;
+  color: var(--gold);
+  font-weight: 800;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 207, 107, 0.45);
+  transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+}
+
+.site-credit a:hover,
+.site-credit a:focus-visible {
+  color: #ffe8a8;
+  border-color: rgba(255, 230, 160, 0.85);
+  text-shadow: 0 0 12px rgba(255, 190, 80, 0.75);
+  outline: none;
+}
+
+.start-overlay .start-credit {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 1;
+  font-size: clamp(11px, 2.2vw, 13px);
+}
+
+.enter-btn {
+  margin: 18px 0 8px;
+  padding: 14px 34px;
+  border: 0;
+  border-radius: 999px;
+  font-size: clamp(17px, 3vw, 20px);
+  font-weight: 800;
+  color: #3a1606;
+  background: linear-gradient(180deg, #ffe08a, #ffb02e 55%, #e8781a);
+  box-shadow: 0 0 0 3px rgba(255, 220, 140, 0.25), 0 8px 30px rgba(255, 140, 30, 0.55);
+  cursor: pointer;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.enter-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+  animation: none;
+}
+
+.enter-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+@keyframes pulse {
+  50% { box-shadow: 0 0 0 8px rgba(255, 220, 140, 0.12), 0 8px 40px rgba(255, 140, 30, 0.85); }
+}
+
+.start-status {
+  font-size: 13px !important;
+  opacity: 0.7 !important;
+}
+
+.start-hint {
+  font-size: 12px !important;
+  opacity: 0.55 !important;
+}
+
+.start-diya {
+  position: relative;
+  /* Scales up on wide screens so the diya stays a clear hero on laptop/desktop. */
+  width: clamp(180px, 42vw, 320px);
+  height: clamp(112px, 26vw, 200px);
+  margin: 0 auto 16px;
+}
+
+.start-diya::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56.5%;
+  border-radius: 0 0 40px 40px;
+  background: linear-gradient(180deg, #d9662a, #8a3112);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.start-diya .flame {
+  position: absolute;
+  left: 50%;
+  bottom: 48%;
+  width: 19%;
+  height: 52%;
+  margin-left: -9.5%;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff8d0, #ffcf4a 45%, #ff7a1a 80%);
+  box-shadow: 0 0 48px 16px rgba(255, 170, 60, 0.65), 0 0 80px 24px rgba(255, 120, 40, 0.35);
+  transform-origin: 50% 100%;
+  animation: flame 0.18s ease-in-out infinite alternate;
+}
+
+@keyframes flame {
+  from { transform: scale(0.95, 1) rotate(-2deg); }
+  to { transform: scale(1.05, 1.08) rotate(2deg); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Radio popup                                                         */
+/* ------------------------------------------------------------------ */
+
+/* left/top are set from JS so the popup follows the (draggable) radio. */
+.radio-popup {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  top: 0;
+  width: min(320px, calc(100vw - 20px));
+  max-height: calc(100vh - 12px);
+  max-height: calc(100dvh - 12px);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px 14px;
+  border-radius: 16px;
+  color: #ffe9c4;
+  background:
+    repeating-linear-gradient(100deg, rgba(0, 0, 0, 0.05) 0 3px, transparent 3px 14px),
+    linear-gradient(180deg, #7a4626, #4a2812);
+  border: 3px solid #2e1708;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 220, 170, 0.25);
+  animation: pop-in 0.22s ease-out;
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+}
+
+.rp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.rp-brand {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #e9c48a;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b1d12;
+  box-shadow: inset 0 0 2px #000;
+}
+
+.radio-popup.on .rp-led {
+  background: #7dff6a;
+  box-shadow: 0 0 8px #7dff6a;
+}
+
+.rp-close {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rp-display {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #2a1806, #1a0e03);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color: #ffcf6b;
+  text-shadow: 0 0 6px rgba(255, 180, 70, 0.6);
+  min-height: 64px;
+}
+
+.rp-title {
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.rp-title span {
+  display: inline-block;
+}
+
+.rp-title.scroll span {
+  padding-left: 100%;
+  animation: marquee 12s linear infinite;
+}
+
+@keyframes marquee {
+  to { transform: translateX(-100%); }
+}
+
+.rp-artist {
+  font-size: 11px;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rp-status {
+  font-size: 11px;
+  color: #ff9d6b;
+  min-height: 1.2em;
+}
+
+.rp-progress {
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.rp-progress:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.rp-bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ffb02e, #ffe08a);
+  border-radius: 4px;
+}
+
+.rp-time {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 6px;
+}
+
+.rp-controls button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #2e1708;
+  background: radial-gradient(circle at 40% 35%, #f3dcae, #c9a26a 70%);
+  color: #3a1d0b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #2e1708, 0 5px 10px rgba(0, 0, 0, 0.4);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.rp-controls button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #2e1708, 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.rp-controls button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.rp-controls .rp-play {
+  width: 54px;
+  height: 54px;
+}
+
+.rp-controls svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.rp-vol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #e9c48a;
+}
+
+.rp-vol input {
+  flex: 1;
+  accent-color: #ffb02e;
+  touch-action: none;
+}
+
+.rp-controls .rp-mode {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  opacity: 0.6;
+}
+
+.rp-controls .rp-mode svg {
+  width: 17px;
+  height: 17px;
+}
+
+.rp-mode[aria-pressed='true'],
+.rp-repeat:not([data-mode='off']) {
+  opacity: 1;
+  box-shadow: 0 3px 0 #2e1708, 0 0 12px rgba(255, 190, 80, 0.8);
+}
+
+.rp-repeat b {
+  position: absolute;
+  right: -2px;
+  top: -4px;
+  display: none;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 15px;
+  color: #3a1d0b;
+  background: #ffcf6b;
+}
+
+.rp-repeat[data-mode='one'] b {
+  display: block;
+}
+
+/* Scrollable track list grouped by mood. */
+.rp-list {
+  flex: 1 1 auto;
+  min-height: 72px;
+  max-height: 168px;
+  margin-top: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.rp-group {
+  position: sticky;
+  top: 0;
+  padding: 5px 10px 3px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e9c48a;
+  background: #3e2110;
+}
+
+.rp-track {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rp-track:hover,
+.rp-track:focus-visible {
+  background: rgba(255, 207, 107, 0.1);
+  outline: none;
+}
+
+.rp-track.current {
+  border-left-color: #ffcf6b;
+  background: rgba(255, 190, 80, 0.18);
+}
+
+.rp-track .rp-t {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rp-track.current .rp-t {
+  color: #ffcf6b;
+}
+
+.rp-track .rp-a {
+  font-size: 10.5px;
+  opacity: 0.7;
+}
+
+.yt-host {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 200px;
+  height: 200px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fatal {
+  padding: 24px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+  .tb-weather span,
+  .tb-btn span {
+    display: none;
+  }
+  .tb-weather {
+    padding: 5px 8px;
+  }
+  .tb-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+  .brand-text,
+  .brand-sep {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) and (min-aspect-ratio: 9/10) {
+  .brand-text,
+  .brand-sep {
+    display: none;
+  }
+}
+
+/* Portrait: the shelf docks along the bottom, the shop stands at the curb. */
+@media (max-aspect-ratio: 9/10) {
+  #shop {
+    inset: 0;
+    width: auto;
+    display: block;
+  }
+  .shop-img {
+    position: absolute;
+    left: 2vw;
+    width: var(--shop-w);
+    bottom: calc(100% - var(--road-top) - 3vw);
+  }
+  .shelf {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    margin: 0;
+    min-width: 0;
+    gap: 5px;
+    padding: 7px 6px 8px;
+  }
+  .slot-art {
+    height: clamp(40px, 11vw, 64px);
+  }
+  .slot-label .hi {
+    font-size: 13px;
+  }
+  .slot-label .en {
+    font-size: 10px;
+  }
+  .radio {
+    width: clamp(60px, 17vw, 110px);
+  }
+}
+
+/* Short landscape phones: shrink the shop so the road stays usable. */
+@media (max-height: 480px) and (min-aspect-ratio: 9/10) {
+  .slot-art {
+    height: 36px;
+  }
+  .slot-label .en {
+    display: none;
+  }
+  .logo {
+    height: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .radio.playing .notes i {
+    animation: none;
+  }
+  .social-btn,
+  .social-btn svg {
+    animation: none;
+  }
+}

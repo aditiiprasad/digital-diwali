@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+This is a Diwali digital-patakas browser game/site. Stack: Vite + TypeScript 
+(vanilla), HTML5 Canvas 2D, Web Audio API, Pointer Events. No frameworks. 
+Keep code modular (one file per pataka type). Mobile-first responsive. 
+Target 60fps; cap concurrent particles. Never autoplay audio before a 
+user gesture. Comment non-obvious logic.
