@@ -1,0 +1,514 @@
+/* ------------------------------------------------------------------ */
+/* Landing / intro overlay — everything is scoped under .landing-*     */
+/* ------------------------------------------------------------------ */
+
+.landing {
+  --landing-gold: #ffcf6b;
+  /* Diya box: 220-260px on most screens, shrinks on short viewports so the stack fits. */
+  --landing-diya: clamp(170px, min(62vw, 34vh), 260px);
+  --landing-btn-w: clamp(240px, 64vw, 300px);
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Dimmed street + soft vignette. The mask is only applied while revealing. */
+.landing-veil {
+  --landing-cx: 50%;
+  --landing-cy: 50%;
+  --landing-r: -160px;
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 46%, rgba(46, 18, 42, 0.5) 0%, rgba(16, 6, 24, 0.8) 62%, rgba(4, 1, 10, 0.94) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.landing-fairy-lights {
+  position: absolute;
+  top: max(4px, env(safe-area-inset-top));
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* GitHub + LinkedIn — same controls as main page (.social in styles.css). */
+.landing .landing-social {
+  position: fixed;
+  z-index: 51;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* margin:auto inside the flex parent = centred, but still scrollable if too tall. */
+.landing-stack {
+  position: relative;
+  z-index: 1;
+  margin: auto;
+  width: min(100%, 560px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.landing-rise {
+  animation: landing-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 120ms + 80ms);
+}
+
+/* `translate` (not `transform`) so it never fights hover/press transforms. */
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+/* ---------------- Heading ---------------- */
+
+.landing-title {
+  margin: 0;
+  padding: 0.12em 0.2em 0;
+  font-family: 'Yatra One', 'Tiro Devanagari Hindi', 'Kohinoor Devanagari', 'Noto Sans Devanagari', var(--font);
+  font-weight: 400;
+  font-size: clamp(40px, 11vw, 72px);
+  line-height: 1.2;
+  background: linear-gradient(180deg, #fff3c4 0%, #ffd36b 45%, #e8952a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(255, 180, 70, 0.45)) drop-shadow(0 2px 0 rgba(90, 30, 0, 0.4));
+}
+
+.landing-subtitle {
+  margin: 4px 0 0;
+  padding-left: 0.32em; /* balances the trailing letter-spacing */
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(12px, 2.6vw, 15px);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 233, 190, 0.72);
+}
+
+/* ---------------- Diya ---------------- */
+
+/* --landing-fx/fy: where the flame base sits (the wick tip on the spout). */
+.landing-diya {
+  --landing-fx: 84%;
+  --landing-fy: 46%;
+  position: relative;
+  width: var(--landing-diya);
+  aspect-ratio: 1;
+  /* The diya PNG has transparent padding (more below the bowl); pull neighbours in. */
+  margin-top: calc(clamp(14px, 3vh, 28px) - var(--landing-diya) * 0.08);
+  margin-bottom: calc(var(--landing-diya) * -0.2);
+}
+
+.landing-diya-img,
+.landing-mandala {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.landing-diya-img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+}
+
+.landing-mandala {
+  left: 50%;
+  top: 52%;
+  width: 150%;
+  height: 150%;
+  translate: -50% -50%;
+  opacity: 0.35;
+  mix-blend-mode: screen;
+  z-index: 0;
+  animation: landing-spin 60s linear infinite;
+}
+
+@keyframes landing-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* Warm light pool around the flame; spills onto the diya and the instruction text. */
+.landing-glow {
+  position: absolute;
+  left: var(--landing-fx);
+  top: calc(var(--landing-fy) - 10%);
+  width: 230%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 190, 90, 0.36) 0%, rgba(255, 140, 50, 0.14) 26%, rgba(255, 120, 40, 0) 58%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+  animation: landing-glow 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes landing-glow {
+  from {
+    opacity: 0.55;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+/* The flame PNG's base is ~82% down the image, so that point sits on the wick. */
+.landing-flame {
+  position: absolute;
+  left: var(--landing-fx);
+  top: var(--landing-fy);
+  width: 34%;
+  aspect-ratio: 1;
+  translate: -50% -82%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.landing-flame-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 82%;
+  filter: drop-shadow(0 0 10px rgba(255, 180, 70, 0.7));
+  animation: landing-flicker 1.9s ease-in-out infinite;
+}
+
+@keyframes landing-flicker {
+  0%,
+  100% {
+    transform: scaleY(1) skewX(0deg) rotate(0deg);
+    opacity: 1;
+  }
+  18% {
+    transform: scaleY(1.04) skewX(-1.5deg) rotate(-1deg);
+    opacity: 0.94;
+  }
+  37% {
+    transform: scaleY(0.96) skewX(1deg) rotate(0.8deg);
+    opacity: 1;
+  }
+  55% {
+    transform: scaleY(1.05) skewX(1.8deg) rotate(1.2deg);
+    opacity: 0.9;
+  }
+  78% {
+    transform: scaleY(0.95) skewX(-1deg) rotate(-0.6deg);
+    opacity: 0.97;
+  }
+}
+
+/* CSS-only diya, used when the diya/flame images are missing or broken. */
+.landing-css-flame {
+  display: none;
+}
+
+.landing-diya.is-css {
+  --landing-fx: 50%;
+  --landing-fy: 50%;
+}
+
+.landing-diya.is-css .landing-diya-img,
+.landing-diya.is-css .landing-flame {
+  display: none;
+}
+
+.landing-diya.is-css::before {
+  content: '';
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 50%;
+  height: 26%;
+  z-index: 1;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: linear-gradient(180deg, #d9662a, #8a3112);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.landing-diya.is-css .landing-css-flame {
+  display: block;
+  position: absolute;
+  left: var(--landing-fx);
+  top: var(--landing-fy);
+  width: 10%;
+  height: 22%;
+  translate: -50% -100%;
+  z-index: 2;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff8d0, #ffcf4a 45%, #ff7a1a 80%);
+  box-shadow: 0 0 36px 12px rgba(255, 170, 60, 0.55);
+  transform-origin: 50% 100%;
+  animation: landing-flicker 1.9s ease-in-out infinite;
+}
+
+/* Sparse embers drifting up from the flame; clipped to a small box so they never reach the heading. */
+.landing-embers {
+  position: absolute;
+  left: var(--landing-fx);
+  top: calc(var(--landing-fy) - 52%);
+  width: 28%;
+  height: 34%;
+  translate: -50% 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.landing-embers i {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffd27a;
+  box-shadow: 0 0 6px 2px rgba(255, 170, 60, 0.7);
+  opacity: 0;
+  animation: landing-ember var(--landing-d, 4s) ease-out infinite;
+  animation-delay: var(--landing-delay, 0s);
+}
+
+.landing-embers i:nth-child(1) { --landing-dx: -10px; --landing-d: 3.8s; --landing-delay: 0.4s; }
+.landing-embers i:nth-child(2) { --landing-dx: 8px; --landing-d: 4.6s; --landing-delay: 1.6s; }
+.landing-embers i:nth-child(3) { --landing-dx: -4px; --landing-d: 4.2s; --landing-delay: 2.7s; }
+.landing-embers i:nth-child(4) { --landing-dx: 12px; --landing-d: 5s; --landing-delay: 3.5s; }
+
+@keyframes landing-ember {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--landing-dx, 0), -72px) scale(0.5);
+  }
+}
+
+/* ---------------- Text ---------------- */
+
+.landing-instruction {
+  margin: clamp(10px, 2vh, 18px) 0 0;
+  max-width: 42ch;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(14px, 3.6vw, 17px);
+  line-height: 1.5;
+  color: rgba(255, 244, 220, 0.9);
+  text-shadow: 0 0 18px rgba(255, 170, 70, 0.35);
+}
+
+.landing-hint {
+  margin: 14px 0 0;
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 241, 214, 0.5);
+}
+
+.landing-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------- Button ---------------- */
+
+.landing-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--landing-btn-w);
+  aspect-ratio: 873 / 286;
+  margin-top: clamp(18px, 3vh, 28px);
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.landing-btn-plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  animation: landing-breathe 3s ease-in-out infinite alternate;
+  transition: filter 0.2s ease;
+}
+
+@keyframes landing-breathe {
+  from {
+    filter: drop-shadow(0 0 8px rgba(255, 170, 60, 0.3));
+  }
+  to {
+    filter: drop-shadow(0 0 20px rgba(255, 170, 60, 0.65));
+  }
+}
+
+.landing-btn-label {
+  position: relative;
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: calc(var(--landing-btn-w) * 0.07);
+  letter-spacing: 0.02em;
+  color: #3a1606;
+  text-shadow: 0 1px 0 rgba(255, 226, 160, 0.6), 0 -1px 0 rgba(70, 25, 0, 0.35);
+}
+
+.landing-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.landing-btn:hover:not(:disabled) .landing-btn-plate {
+  animation: none;
+  filter: brightness(1.1) drop-shadow(0 0 26px rgba(255, 180, 70, 0.85));
+}
+
+.landing-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+
+.landing-btn:focus-visible {
+  outline: 3px solid var(--landing-gold);
+  outline-offset: 4px;
+}
+
+/* Dim only while loading; the button is also disabled during the exit, which should not dim it. */
+.landing:not(.is-exiting) .landing-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.landing:not(.is-exiting) .landing-btn:disabled .landing-btn-plate {
+  animation: none;
+}
+
+/* CSS-only pill, used when button-plate.png is missing or broken. */
+.landing-btn.is-css {
+  width: auto;
+  aspect-ratio: auto;
+  padding: 14px 34px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe08a, #ffb02e 55%, #e8781a);
+  box-shadow: 0 0 0 3px rgba(255, 220, 140, 0.25), 0 8px 30px rgba(255, 140, 30, 0.55);
+}
+
+.landing-btn.is-css .landing-btn-plate {
+  display: none;
+}
+
+.landing-btn.is-css .landing-btn-label {
+  font-size: clamp(17px, 3vw, 20px);
+}
+
+/* ---------------- Exit transition ---------------- */
+
+.landing.is-exiting {
+  pointer-events: none;
+}
+
+.landing.is-lighting .landing-flame-img,
+.landing.is-lighting .landing-css-flame {
+  animation: landing-swell 0.4s ease-out forwards;
+}
+
+.landing.is-lighting .landing-glow {
+  animation: landing-glow-swell 0.4s ease-out forwards;
+}
+
+@keyframes landing-swell {
+  to {
+    transform: scale(1.4, 1.55);
+    filter: brightness(1.25) drop-shadow(0 0 18px rgba(255, 190, 90, 0.9));
+  }
+}
+
+@keyframes landing-glow-swell {
+  to {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+/* --landing-r is driven from JS; the 160px ramp matches REVEAL_FEATHER in Landing.ts. */
+.landing.is-revealing .landing-veil {
+  -webkit-mask-image: radial-gradient(
+    circle at var(--landing-cx) var(--landing-cy),
+    transparent var(--landing-r),
+    #000 calc(var(--landing-r) + 160px)
+  );
+  mask-image: radial-gradient(
+    circle at var(--landing-cx) var(--landing-cy),
+    transparent var(--landing-r),
+    #000 calc(var(--landing-r) + 160px)
+  );
+}
+
+.landing.is-revealing .landing-stack,
+.landing.is-revealing .landing-fairy-lights,
+.landing.is-revealing .landing-social {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.landing.is-fading {
+  opacity: 0;
+  transition: opacity 0.3s linear;
+}
+
+/* ---------------- Reduced motion ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-rise,
+  .landing-flame-img,
+  .landing-diya.is-css .landing-css-flame,
+  .landing-glow,
+  .landing-mandala,
+  .landing-btn-plate {
+    animation: none;
+  }
+
+  .landing-embers {
+    display: none;
+  }
+
+  .landing-btn-plate {
+    filter: drop-shadow(0 0 14px rgba(255, 170, 60, 0.5));
+  }
+}

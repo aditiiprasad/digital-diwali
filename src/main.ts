@@ -129,19 +129,17 @@ async function boot() {
   });
 
   ui.setLoading('Ready when you are.', true);
-  ui.enterBtn.addEventListener('click', async () => {
+  ui.enterBtn.addEventListener('click', () => {
     ui.enterBtn.disabled = true;
     ui.setLoading('Lighting the diyas…', false);
-    try {
-      await audio.unlock();
-      audio.startAmbient();
-    } catch (err) {
-      console.warn('[audio] Unlock failed; continuing without sound.', err);
-    }
-    ui.overlay.classList.add('hidden');
-    showStartFairy = false;
-    window.setTimeout(() => ui.overlay.remove(), 700);
-    ui.showTip();
+    // Unlock inside the gesture; the landing's exit animation runs in parallel.
+    audio.unlock()
+      .then(() => audio.startAmbient())
+      .catch((err) => console.warn('[audio] Unlock failed; continuing without sound.', err));
+    void ui.landing.exit().then(() => {
+      showStartFairy = false;
+      ui.showTip();
+    });
   }, { once: true });
 
   // Pause audio in background tabs; resume on return.

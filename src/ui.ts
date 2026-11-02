@@ -1,7 +1,8 @@
 import type { LoadedImage } from './assets';
 import { GITHUB_URL, LINKEDIN_URL } from './data/links';
+import { buildLanding, type Landing } from './landing/Landing';
 
-/** Top bar, start overlay, tip, toast and social links. Pure DOM; behaviour is wired in main.ts. */
+/** Top bar, landing overlay, tip, toast and social links. Pure DOM; behaviour is wired in main.ts. */
 
 const SOCIAL_ICON = {
   github:
@@ -10,7 +11,7 @@ const SOCIAL_ICON = {
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4V21H3zM9.5 9.75h3.83v1.54h.06c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.13V21h-4v-5.02c0-1.2-.02-2.74-1.67-2.74-1.67 0-1.93 1.3-1.93 2.65V21h-4z"/></svg>',
 };
 
-/** “Developed by Aditi” — LinkedIn link on landing and main page. */
+/** “Developed by Aditi” — LinkedIn link in the main page top bar. */
 function buildCredit(extraClass = ''): HTMLElement {
   const p = document.createElement('p');
   p.className = extraClass ? `site-credit ${extraClass}` : 'site-credit';
@@ -18,7 +19,7 @@ function buildCredit(extraClass = ''): HTMLElement {
   return p;
 }
 
-/** GitHub + LinkedIn buttons (main page corner and landing overlay). */
+/** GitHub + LinkedIn buttons (main page corner). */
 function buildSocialNav(extraClass = ''): HTMLElement {
   const nav = document.createElement('nav');
   nav.className = extraClass ? `social ${extraClass}` : 'social';
@@ -55,6 +56,7 @@ export interface UI {
   rainBtn: HTMLButtonElement;
   enterBtn: HTMLButtonElement;
   overlay: HTMLDivElement;
+  landing: Landing;
   /** Fairy-light garland on the landing screen (same as the street scene). */
   startLightsCanvas: HTMLCanvasElement;
   social: HTMLElement;
@@ -110,30 +112,8 @@ export function buildUI(root: HTMLElement): UI {
   toastEl.setAttribute('aria-live', 'polite');
   root.appendChild(toastEl);
 
-  const overlay = document.createElement('div');
-  overlay.className = 'start-overlay';
-  const startLightsCanvas = document.createElement('canvas');
-  startLightsCanvas.className = 'start-fairy-lights';
-  startLightsCanvas.setAttribute('aria-hidden', 'true');
-  overlay.appendChild(startLightsCanvas);
-  const startCard = document.createElement('div');
-  startCard.className = 'start-card';
-  startCard.innerHTML = `
-      <div class="start-diya" aria-hidden="true"><span class="flame"></span></div>
-      <p class="start-instructions">
-        Pick patakas from the <strong>shop</strong>, drag them onto the <strong>road</strong>, and tap to light the fuse.
-        Hold and move the <strong>fuljhadi</strong> to spark in the air!
-      </p>
-      <button type="button" class="enter-btn" disabled>Enter the Gali</button>
-      <p class="start-status">Loading…</p>
-      <p class="start-hint">Best with sound on · Headphones recommended</p>
-  `;
-  overlay.appendChild(startCard);
-  overlay.appendChild(buildCredit('start-credit'));
-  overlay.appendChild(buildSocialNav('start-social'));
-  root.appendChild(overlay);
-  const enterBtn = overlay.querySelector<HTMLButtonElement>('.enter-btn')!;
-  const status = overlay.querySelector<HTMLParagraphElement>('.start-status')!;
+  const landing = buildLanding(root);
+  landing.root.appendChild(buildSocialNav('landing-social'));
 
   const rainBtn = bar.querySelector<HTMLButtonElement>('.tb-rain')!;
   const muteBtn = bar.querySelector<HTMLButtonElement>('.tb-mute')!;
@@ -144,15 +124,17 @@ export function buildUI(root: HTMLElement): UI {
   let tipTimer = 0;
 
   return {
-    rainBtn, muteBtn, ambientBtn, clearBtn, enterBtn, overlay, startLightsCanvas, social,
+    rainBtn, muteBtn, ambientBtn, clearBtn, social, landing,
+    enterBtn: landing.enterBtn,
+    overlay: landing.root,
+    startLightsCanvas: landing.lightsCanvas,
     setLogo(img) {
       logo.src = img.url;
       logo.alt = 'Shubh Diwali';
       bar.classList.toggle('logo-fallback', img.isFallback);
     },
     setLoading(text, ready) {
-      status.textContent = text;
-      enterBtn.disabled = !ready;
+      landing.setStatus(text, ready);
     },
     setMuted(muted) {
       muteBtn.setAttribute('aria-pressed', String(muted));
