@@ -893,19 +893,6 @@ button {
   max-width: 460px;
 }
 
-.start-logo {
-  display: block;
-  width: min(92vw, 420px);
-  height: auto;
-  margin: 4px auto 10px;
-  filter: drop-shadow(0 0 16px rgba(255, 150, 40, 0.55));
-}
-
-.start-overlay.logo-fallback .start-logo {
-  max-height: 72px;
-  width: auto;
-}
-
 .start-card p {
   margin: 6px 0;
   opacity: 0.9;
@@ -913,23 +900,16 @@ button {
 }
 
 .start-instructions {
-  margin: 14px 0 6px;
-  padding: 14px 18px;
+  margin: 10px 0 6px;
+  padding: 0 8px;
   font-family: var(--font);
   font-size: clamp(15px, 2.9vw, 18px);
   font-weight: 600;
   line-height: 1.5;
   letter-spacing: 0.02em;
-  color: #fff4dc;
+  color: rgba(255, 244, 220, 0.92);
   opacity: 1;
   text-align: center;
-  background: linear-gradient(135deg, rgba(80, 28, 48, 0.55), rgba(40, 18, 52, 0.72));
-  border: 1px solid rgba(255, 207, 107, 0.42);
-  border-radius: 14px;
-  box-shadow:
-    0 0 24px rgba(255, 140, 50, 0.18),
-    inset 0 1px 0 rgba(255, 220, 160, 0.12);
-  text-shadow: 0 1px 12px rgba(255, 160, 60, 0.35);
 }
 
 .start-instructions strong {
@@ -1052,6 +1032,59 @@ button {
 @keyframes flame {
   from { transform: scale(0.95, 1) rotate(-2deg); }
   to { transform: scale(1.05, 1.08) rotate(2deg); }
+}
+
+/* Landing: portrait / narrow phones — smaller title art, tighter stack */
+@media (max-aspect-ratio: 9/10), (max-width: 520px) {
+  .start-overlay {
+    padding: max(8px, env(safe-area-inset-top)) 14px max(88px, calc(env(safe-area-inset-bottom) + 72px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    align-content: safe center;
+  }
+
+  .start-fairy-lights {
+    height: 64px;
+  }
+
+  .start-diya {
+    width: clamp(100px, 28vw, 150px);
+    height: clamp(62px, 17vw, 94px);
+    margin: 0 auto 6px;
+  }
+
+  .start-instructions {
+    margin: 6px 0 4px;
+    padding: 0 6px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .enter-btn {
+    margin: 10px 0 4px;
+    padding: 11px 26px;
+    font-size: 16px;
+  }
+
+  .start-status {
+    font-size: 12px !important;
+    margin: 2px 0 !important;
+  }
+
+  .start-hint {
+    display: none;
+  }
+
+  .start-overlay .start-credit {
+    font-size: 10px;
+    max-width: 42vw;
+    line-height: 1.25;
+  }
+
+  .start-overlay .start-social .social-btn {
+    width: 34px;
+    height: 34px;
+  }
 }
 
 /* ------------------------------------------------------------------ */

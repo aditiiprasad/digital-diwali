@@ -120,7 +120,6 @@ export function buildUI(root: HTMLElement): UI {
   startCard.className = 'start-card';
   startCard.innerHTML = `
       <div class="start-diya" aria-hidden="true"><span class="flame"></span></div>
-      <img class="start-logo" alt="Happy Diwali" />
       <p class="start-instructions">
         Pick patakas from the <strong>shop</strong>, drag them onto the <strong>road</strong>, and tap to light the fuse.
         Hold and move the <strong>fuljhadi</strong> to spark in the air!
@@ -135,7 +134,6 @@ export function buildUI(root: HTMLElement): UI {
   root.appendChild(overlay);
   const enterBtn = overlay.querySelector<HTMLButtonElement>('.enter-btn')!;
   const status = overlay.querySelector<HTMLParagraphElement>('.start-status')!;
-  const startLogo = overlay.querySelector<HTMLImageElement>('.start-logo')!;
 
   const rainBtn = bar.querySelector<HTMLButtonElement>('.tb-rain')!;
   const muteBtn = bar.querySelector<HTMLButtonElement>('.tb-mute')!;
@@ -150,10 +148,7 @@ export function buildUI(root: HTMLElement): UI {
     setLogo(img) {
       logo.src = img.url;
       logo.alt = 'Shubh Diwali';
-      startLogo.src = img.url;
-      startLogo.alt = 'Shubh Diwali';
       bar.classList.toggle('logo-fallback', img.isFallback);
-      overlay.classList.toggle('logo-fallback', img.isFallback);
     },
     setLoading(text, ready) {
       status.textContent = text;
