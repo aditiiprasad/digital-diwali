@@ -6,6 +6,7 @@ import { portraitQuery, quality } from './config';
 import { DragDrop } from './dragDrop';
 import { Effects } from './particles/Effects';
 import { ParticleSystem } from './particles/ParticleSystem';
+import { InteractiveFestival } from './interactive';
 import { PATAKAS, PATAKA_BY_KIND } from './patakas';
 import { SparklerController } from './patakas/Fuljhadi';
 import { PatakaManager } from './patakas/PatakaManager';
@@ -29,6 +30,7 @@ async function boot() {
   ui.setLogo(images.logo);
 
   const scene = new Scene(app, images, PATAKAS);
+  const festival = new InteractiveFestival(scene, ui.toast);
   const startFairy = new FairyLights();
   const START_FAIRY_H = 92;
   let showStartFairy = true;
@@ -190,6 +192,7 @@ async function boot() {
 
   function step(dt: number) {
     scene.update(dt);
+    festival.update(dt);
     manager.update(dt);
     sparklers.update(dt);
     particles.update(dt);
