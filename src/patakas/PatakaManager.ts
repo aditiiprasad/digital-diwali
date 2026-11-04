@@ -18,6 +18,34 @@ export class PatakaManager {
   /** Called every time a pataka is lit. */
   onLit: (() => void) | null = null;
 
+  snapshot() {
+    return this.items
+      .filter((p) => p.state === 'idle' || p.state === 'landing')
+      .map((p) => ({ kind: p.def.kind, x: p.x, y: p.y }));
+  }
+
+  restore(snapshot: { kind: string; x: number; y: number }[], defs: Record<string, PatakaDef>) {
+    this.clear();
+    for (const item of snapshot) {
+      const def = defs[item.kind];
+      if (def) this.place(def, item.x, item.y, 0);
+    }
+  }
+
+  arrangeLine(kind = 'diya') {
+    const items = this.items.filter((p) => p.def.kind === kind && (p.state === 'idle' || p.state === 'landing'));
+    if (!items.length) return;
+    const y = this.world.roadTop + (this.world.roadBottom - this.world.roadTop) * 0.3;
+    items.forEach((p, i) => this.move(p, this.world.width * (0.16 + (i / Math.max(1, items.length - 1)) * 0.68), y));
+  }
+
+  randomArrange() {
+    for (const p of this.items) {
+      if (p.state !== 'idle' && p.state !== 'landing') continue;
+      this.move(p, this.world.width * (0.12 + Math.random() * 0.76), this.world.roadTop + (this.world.roadBottom - this.world.roadTop) * (0.15 + Math.random() * 0.7));
+    }
+  }
+
   constructor(private world: World) {}
 
   /** Patakas still on the road (lit or not) count toward the cap. */

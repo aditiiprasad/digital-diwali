@@ -48,6 +48,7 @@ const DROP_LIFT = 0.25;
  * affordances, and routing "hold" patakas (fuljhadi) to their controller.
  */
 export class DragDrop {
+  snapToGrid = false;
   private drag: DragState | null = null;
   private placedDrag: PlacedDragState | null = null;
   private shopDrag: ShopDragState | null = null;
@@ -196,8 +197,11 @@ export class DragDrop {
     const dy = e.clientY - d.startY;
     if (!d.moved && Math.hypot(dx, dy) < 5) return;
     d.moved = true;
-    const y = clamp(d.y + dy, this.scene.roadTop + 2, this.scene.roadBottom);
-    const x = clamp(d.x + dx, 12, this.scene.width - 12);
+    const rawY = clamp(d.y + dy, this.scene.roadTop + 2, this.scene.roadBottom);
+    const rawX = clamp(d.x + dx, 12, this.scene.width - 12);
+    const grid = Math.max(12, this.scene.baseSize * 0.45);
+    const y = this.snapToGrid ? Math.round(rawY / grid) * grid : rawY;
+    const x = this.snapToGrid ? Math.round(rawX / grid) * grid : rawX;
     this.manager.move(d.item, x, y);
   }
 

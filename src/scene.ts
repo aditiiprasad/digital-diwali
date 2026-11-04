@@ -15,6 +15,8 @@ interface DistantBurst { x: number; y: number; t: number; dur: number; r: number
 export const SHOP_SCALE = 1.38;
 
 const DISTANT_COLORS = ['#ffcf6b', '#ff7a7a', '#8affc1', '#8ab8ff', '#ff9cf2'];
+const rWidth = (el: HTMLElement) => el.getBoundingClientRect().width;
+const rHeight = (el: HTMLElement) => el.getBoundingClientRect().height;
 
 function glowSprite(hex: string, size = 32): HTMLCanvasElement {
   const c = document.createElement('canvas');
@@ -45,6 +47,7 @@ export class Scene {
   readonly slots: HTMLButtonElement[] = [];
   readonly radioBtn: HTMLButtonElement;
   readonly roadZone: HTMLDivElement;
+  readonly decorLayer: HTMLDivElement;
   private streetLayer: HTMLDivElement;
   private hintEl: HTMLDivElement;
   private hintKey = '';
@@ -75,6 +78,8 @@ export class Scene {
   private shakeDur = 1;
   private shakeI = 0;
   private resizeListeners = new Set<(oldW: number, oldTop: number, oldBottom: number) => void>();
+  private decorations: { kind: 'rangoli' | 'toran' | 'flowers' | 'lantern'; el: HTMLButtonElement }[] = [];
+  private viewScale = 1;
 
   constructor(root: HTMLElement, images: ImageSet, defs: PatakaDef[]) {
     this.streetAspect = images.street.width / images.street.height;
@@ -86,6 +91,7 @@ export class Scene {
       <div class="layer layer-street"></div>
       <div class="layer layer-road"><div class="road-line"></div></div>
       <div class="road-zone" aria-hidden="true"></div>
+      <div class="decor-layer" aria-label="Diwali decorations"></div>
       <div id="shop">
         <div class="shop-movable">
           <div class="shop-title"><span>🪔</span> Diya &amp; Pataka Shop</div>
@@ -107,6 +113,7 @@ export class Scene {
     this.streetLayer = this.el.querySelector('.layer-street')!;
     this.streetLayer.style.backgroundImage = `url("${images.street.url}")`;
     this.roadZone = this.el.querySelector('.road-zone')!;
+    this.decorLayer = this.el.querySelector('.decor-layer')!;
     this.shopEl = this.el.querySelector('#shop')!;
     this.shopMoveEl = this.el.querySelector('.shop-movable')!;
     this.shopImg = this.el.querySelector('.shop-img')!;
@@ -143,6 +150,66 @@ export class Scene {
     // The shop image's height affects the portrait shelf, so re-layout once it decodes.
     this.shopImg.addEventListener('load', () => this.layout());
     this.layout();
+  }
+
+  setViewScale(scale: number) {
+    this.viewScale = clamp(scale, 0.85, 1.25);
+  }
+
+  addDecoration(kind: 'rangoli' | 'toran' | 'flowers' | 'lantern') {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = `decoration decoration-${kind}`;
+    el.textContent = kind === 'rangoli' ? '🌸' : kind === 'toran' ? '🪷🪷🪷' : kind === 'flowers' ? '🌼🌼' : '🏮';
+    el.setAttribute('aria-label', `${kind} decoration — drag to move`);
+    el.style.left = `${this.width * (0.35 + Math.random() * 0.3)}px`;
+    el.style.top = `${this.roadTop + 15 + Math.random() * Math.max(10, this.roadBottom - this.roadTop - 40)}px`;
+    this.decorLayer.appendChild(el);
+    this.decorations.push({ kind, el });
+    let active = false;
+    let ox = 0, oy = 0;
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      active = true;
+      const r = el.getBoundingClientRect();
+      ox = e.clientX - r.left;
+      oy = e.clientY - r.top;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('moving');
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!active) return;
+      el.style.left = `${clamp(e.clientX - ox, 8, this.width - rWidth(el) - 8)}px`;
+      el.style.top = `${clamp(e.clientY - oy, this.roadTop, this.roadBottom - rHeight(el))}px`;
+    });
+    const stop = () => { active = false; el.classList.remove('moving'); };
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+  }
+
+  decorationSnapshot() {
+    return this.decorations.map(({ kind, el }) => ({
+      kind,
+      x: Number.parseFloat(el.style.left) || 0,
+      y: Number.parseFloat(el.style.top) || 0,
+    }));
+  }
+
+  restoreDecorations(snapshot: { kind: 'rangoli' | 'toran' | 'flowers' | 'lantern'; x: number; y: number }[]) {
+    for (const { el } of this.decorations) el.remove();
+    this.decorations = [];
+    for (const item of snapshot) {
+      this.addDecoration(item.kind);
+      const current = this.decorations[this.decorations.length - 1].el;
+      current.style.left = `${item.x}px`;
+      current.style.top = `${item.y}px`;
+    }
+  }
+
+  celebrate() {
+    for (let i = 0; i < 7; i++) {
+      this.bursts.push({ x: rand(this.width * 0.1, this.width * 0.9), y: rand(this.skyTop + 20, this.skyBottom), t: 0, dur: 2, r: rand(25, 55) * this.unit, color: i % DISTANT_COLORS.length, rays: 20, rot: rand(0, Math.PI) });
+    }
   }
 
   onResize(fn: (oldW: number, oldTop: number, oldBottom: number) => void) {
@@ -275,8 +342,10 @@ export class Scene {
       const m = this.shakeI * k * k;
       this.el.style.transform = this.shakeT > 0
         ? // Slight scale-up hides the viewport edges while the scene is offset.
-          `translate3d(${rand(-m, m).toFixed(1)}px, ${rand(-m, m).toFixed(1)}px, 0) rotate(${rand(-0.4, 0.4) * k}deg) scale(${1 + 0.03 * k})`
+          `translate3d(${rand(-m, m).toFixed(1)}px, ${rand(-m, m).toFixed(1)}px, 0) rotate(${rand(-0.4, 0.4) * k}deg) scale(${this.viewScale + 0.03 * k})`
         : '';
+    } else {
+      this.el.style.transform = this.viewScale === 1 ? '' : `scale(${this.viewScale})`;
     }
 
     // Occasional faint fireworks far away in the sky.

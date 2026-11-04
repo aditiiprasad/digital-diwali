@@ -53,6 +53,18 @@ export interface UI {
   muteBtn: HTMLButtonElement;
   ambientBtn: HTMLButtonElement;
   clearBtn: HTMLButtonElement;
+  arrangeBtn: HTMLButtonElement;
+  randomBtn: HTMLButtonElement;
+  saveBtn: HTMLButtonElement;
+  loadBtn: HTMLButtonElement;
+  undoBtn: HTMLButtonElement;
+  redoBtn: HTMLButtonElement;
+  celebrateBtn: HTMLButtonElement;
+  themeBtn: HTMLButtonElement;
+  snapBtn: HTMLButtonElement;
+  zoomInBtn: HTMLButtonElement;
+  zoomOutBtn: HTMLButtonElement;
+  decorButtons: HTMLButtonElement[];
   rainBtn: HTMLButtonElement;
   enterBtn: HTMLButtonElement;
   overlay: HTMLDivElement;
@@ -89,6 +101,17 @@ export function buildUI(root: HTMLElement): UI {
       <button type="button" class="tb-btn tb-mute" aria-pressed="false" title="Mute all sound">${ICON.sound}<span>Sound</span></button>
       <button type="button" class="tb-btn tb-ambient" aria-pressed="true" title="Street ambience on/off">${ICON.ambient}<span>Ambient</span></button>
       <button type="button" class="tb-btn tb-clear" title="Remove all patakas from the road">${ICON.clear}<span>Clear Road</span></button>
+      <button type="button" class="tb-btn arrange-btn" title="Arrange diyas in a line">Arrange</button>
+      <button type="button" class="tb-btn random-btn" title="Randomly decorate">Random</button>
+      <button type="button" class="tb-btn save-btn" title="Save decoration">Save</button>
+      <button type="button" class="tb-btn load-btn" title="Load decoration">Load</button>
+      <button type="button" class="tb-btn undo-btn" title="Undo">↶</button>
+      <button type="button" class="tb-btn redo-btn" title="Redo">↷</button>
+      <button type="button" class="tb-btn celebrate-btn" title="Fireworks">🎆</button>
+      <button type="button" class="tb-btn theme-btn" title="Change theme">Theme</button>
+      <button type="button" class="tb-btn snap-btn" title="Snap items to grid">Grid</button>
+      <button type="button" class="tb-btn zoom-out" title="Zoom out">−</button>
+      <button type="button" class="tb-btn zoom-in" title="Zoom in">+</button>
       </div>
     </div>
   `;
@@ -112,6 +135,18 @@ export function buildUI(root: HTMLElement): UI {
   toastEl.setAttribute('aria-live', 'polite');
   root.appendChild(toastEl);
 
+  const decorToolbar = document.createElement('div');
+  decorToolbar.className = 'decor-toolbar';
+  decorToolbar.setAttribute('aria-label', 'Add decorations');
+  decorToolbar.innerHTML = `
+    <span>Decorate:</span>
+    <button type="button" data-decoration="rangoli">🌸 Rangoli</button>
+    <button type="button" data-decoration="toran">🪷 Toran</button>
+    <button type="button" data-decoration="flowers">🌼 Flowers</button>
+    <button type="button" data-decoration="lantern">🏮 Lantern</button>
+  `;
+  root.appendChild(decorToolbar);
+
   const landing = buildLanding(root);
   landing.root.appendChild(buildSocialNav('landing-social'));
 
@@ -125,6 +160,18 @@ export function buildUI(root: HTMLElement): UI {
 
   return {
     rainBtn, muteBtn, ambientBtn, clearBtn, social, landing,
+    arrangeBtn: bar.querySelector('.arrange-btn')!,
+    randomBtn: bar.querySelector('.random-btn')!,
+    saveBtn: bar.querySelector('.save-btn')!,
+    loadBtn: bar.querySelector('.load-btn')!,
+    undoBtn: bar.querySelector('.undo-btn')!,
+    redoBtn: bar.querySelector('.redo-btn')!,
+    celebrateBtn: bar.querySelector('.celebrate-btn')!,
+    themeBtn: bar.querySelector('.theme-btn')!,
+    snapBtn: bar.querySelector('.snap-btn')!,
+    zoomInBtn: bar.querySelector('.zoom-in')!,
+    zoomOutBtn: bar.querySelector('.zoom-out')!,
+    decorButtons: [...decorToolbar.querySelectorAll<HTMLButtonElement>('button')],
     enterBtn: landing.enterBtn,
     overlay: landing.root,
     startLightsCanvas: landing.lightsCanvas,

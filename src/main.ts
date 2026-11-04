@@ -77,7 +77,7 @@ async function boot() {
   manager = new PatakaManager(world);
   const sparklers = new SparklerController(world, ui.toast);
 
-  new DragDrop(scene, manager, sparklers, PATAKA_BY_KIND, images, ui.toast);
+  const dragDrop = new DragDrop(scene, manager, sparklers, PATAKA_BY_KIND, images, ui.toast);
   // Start with a neat, easy-to-grab line of diyas on the road.
   const diyaCount = 5;
   const diyaY = scene.roadTop + Math.min(42, (scene.roadBottom - scene.roadTop) * 0.28);
@@ -107,6 +107,72 @@ async function boot() {
   };
   manager.onLit = onLit;
   sparklers.onLit = onLit;
+
+  const history: ReturnType<PatakaManager['snapshot']>[] = [];
+  const future: ReturnType<PatakaManager['snapshot']>[] = [];
+  const remember = () => {
+    history.push(manager.snapshot());
+    if (history.length > 30) history.shift();
+    future.length = 0;
+  };
+  const saveLayout = () => {
+    localStorage.setItem('digital-diwali-layout', JSON.stringify({
+      items: manager.snapshot(),
+      decorations: scene.decorationSnapshot(),
+      theme: [...document.documentElement.classList].filter((c) => c.startsWith('theme-'))[0] ?? '',
+    }));
+    ui.toast('Decoration saved!');
+  };
+  const loadLayout = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('digital-diwali-layout') ?? 'null');
+      if (Array.isArray(saved)) {
+        manager.restore(saved, PATAKA_BY_KIND);
+      } else if (saved && Array.isArray(saved.items)) {
+        manager.restore(saved.items, PATAKA_BY_KIND);
+        scene.restoreDecorations(Array.isArray(saved.decorations) ? saved.decorations : []);
+        document.documentElement.classList.remove('theme-night', 'theme-royal', 'theme-warm');
+        if (saved.theme) document.documentElement.classList.add(saved.theme);
+      }
+      ui.toast('Decoration loaded!');
+    } catch {
+      ui.toast('Saved decoration could not be loaded.');
+    }
+  };
+  ui.arrangeBtn.addEventListener('click', () => { remember(); manager.arrangeLine(); ui.toast('Diyas arranged in a line.'); });
+  ui.randomBtn.addEventListener('click', () => { remember(); manager.randomArrange(); scene.addDecoration('rangoli'); ui.toast('Random decoration added.'); });
+  ui.saveBtn.addEventListener('click', saveLayout);
+  ui.loadBtn.addEventListener('click', loadLayout);
+  ui.undoBtn.addEventListener('click', () => {
+    const previous = history.pop();
+    if (!previous) return;
+    future.push(manager.snapshot());
+    manager.restore(previous, PATAKA_BY_KIND);
+  });
+  ui.redoBtn.addEventListener('click', () => {
+    const next = future.pop();
+    if (!next) return;
+    history.push(manager.snapshot());
+    manager.restore(next, PATAKA_BY_KIND);
+  });
+  ui.celebrateBtn.addEventListener('click', () => { scene.celebrate(); ui.toast('Happy Diwali! 🎆'); });
+  ui.themeBtn.addEventListener('click', () => {
+    const themes = ['theme-night', 'theme-royal', 'theme-warm'];
+    const current = themes.findIndex((t) => document.documentElement.classList.contains(t));
+    document.documentElement.classList.remove(...themes);
+    document.documentElement.classList.add(themes[(current + 1) % themes.length]);
+  });
+  ui.snapBtn.addEventListener('click', () => {
+    dragDrop.snapToGrid = !dragDrop.snapToGrid;
+    ui.snapBtn.classList.toggle('on', dragDrop.snapToGrid);
+    ui.toast(dragDrop.snapToGrid ? 'Grid snapping on.' : 'Grid snapping off.');
+  });
+  let zoom = 1;
+  ui.zoomInBtn.addEventListener('click', () => { zoom = Math.min(1.25, zoom + 0.05); scene.setViewScale(zoom); });
+  ui.zoomOutBtn.addEventListener('click', () => { zoom = Math.max(0.85, zoom - 0.05); scene.setViewScale(zoom); });
+  for (const button of ui.decorButtons) {
+    button.addEventListener('click', () => scene.addDecoration(button.dataset.decoration as 'rangoli' | 'toran' | 'flowers' | 'lantern'));
+  }
 
   ui.rainBtn.addEventListener('click', () => {
     if (!audio.ctx) {
