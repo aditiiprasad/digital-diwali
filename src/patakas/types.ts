@@ -4,7 +4,7 @@ import { hoverQuery, quality } from '../config';
 import type { Effects } from '../particles/Effects';
 import type { ParticleSystem } from '../particles/ParticleSystem';
 
-export type PatakaKind = 'anaar' | 'rocket' | 'chakri' | 'atomBomb' | 'fuljhadi';
+export type PatakaKind = 'diya' | 'anaar' | 'rocket' | 'chakri' | 'atomBomb' | 'fuljhadi';
 
 /**
  * How a pataka is used: `place` = drop on the road then tap to light;

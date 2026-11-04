@@ -154,6 +154,23 @@ button {
   transition: filter 0.15s;
 }
 
+.shop-title {
+  position: absolute;
+  left: 8px;
+  top: -30px;
+  z-index: 1;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 207, 107, 0.55);
+  border-radius: 999px;
+  background: rgba(38, 18, 30, 0.82);
+  color: var(--gold);
+  font-size: clamp(11px, 1vw, 14px);
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 2px #1a0f2e;
+}
+
 .shop-movable.moving {
   filter: drop-shadow(0 0 12px rgba(255, 207, 107, 0.35));
 }
@@ -177,9 +194,9 @@ button {
 .shelf {
   position: relative;
   margin-top: -9%;
-  min-width: calc(5 * 56px + 4 * 6px + 16px);
+  min-width: calc(6 * 56px + 5 * 6px + 16px);
   display: grid;
-  grid-template-columns: repeat(5, minmax(56px, 1fr));
+  grid-template-columns: repeat(6, minmax(56px, 1fr));
   gap: 6px;
   padding: 8px 8px 9px;
   border-radius: 10px;
@@ -1269,6 +1286,11 @@ button {
     inset: 0;
     transform: none;
   }
+  .shop-title {
+    left: 2vw;
+    top: auto;
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 132px);
+  }
   .shop-img {
     position: absolute;
     left: 2vw;
@@ -1283,6 +1305,7 @@ button {
     bottom: max(8px, env(safe-area-inset-bottom));
     margin: 0;
     min-width: 0;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 5px;
     padding: 7px 6px 8px;
     transform: translate3d(var(--shop-dx, 0px), var(--shop-dy, 0px), 0);

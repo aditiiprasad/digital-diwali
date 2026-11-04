@@ -88,6 +88,7 @@ export class Scene {
       <div class="road-zone" aria-hidden="true"></div>
       <div id="shop">
         <div class="shop-movable">
+          <div class="shop-title"><span>🪔</span> Diya &amp; Pataka Shop</div>
           <img class="shop-img" alt="Pataka shop — drag to move" draggable="false" />
           <div class="shelf" role="toolbar" aria-label="Patakas — drag one onto the road"></div>
         </div>

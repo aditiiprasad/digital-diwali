@@ -9,6 +9,7 @@ import { fallbackImage } from './fallbackArt';
  */
 
 const DIRS = ['assets', 'assests'];
+const LANDING_DIRS = ['assets/landing', 'assests/landing'];
 const available = new Set(publicFiles);
 const base = import.meta.env.BASE_URL;
 
@@ -20,6 +21,7 @@ export type ImageKey =
   | 'chakri'
   | 'atomBomb'
   | 'fuljhadi'
+  | 'diya'
   | 'radio'
   | 'logo';
 
@@ -47,6 +49,7 @@ const IMAGE_FILES: Record<ImageKey, string[]> = {
   chakri: ['chakri.png'],
   atomBomb: ['atom-bomb.png', 'bomb.png', 'atombomb.png'],
   fuljhadi: ['fuljhadi.png', 'sparkler.png'],
+  diya: ['diya-unlit.png'],
   radio: ['radio.png'],
   logo: ['logo.png', 'happydiwali.png'],
 };
@@ -80,6 +83,16 @@ function resolve(sub: 'images' | 'audio', names: string[]): string | null {
 
 export const soundUrl = (key: SoundKey) => resolve('audio', SOUND_FILES[key]);
 export const SOUND_KEYS = Object.keys(SOUND_FILES) as SoundKey[];
+
+function resolveLanding(names: string[]): string | null {
+  for (const dir of LANDING_DIRS) {
+    for (const name of names) {
+      const rel = `${dir}/${name}`;
+      if (available.has(rel)) return base + rel;
+    }
+  }
+  return null;
+}
 
 export interface LoadedImage {
   /** Drawable source for canvas (trimmed to its opaque bounds for sprites). */
@@ -151,12 +164,15 @@ const TRIMMED: Partial<Record<ImageKey, number>> = {
   chakri: 360,
   atomBomb: 360,
   fuljhadi: 400,
+  diya: 260,
   // Trimmed so its on-screen size matches the visible stall (used by SHOP_SCALE).
   shop: 1000,
 };
 
 async function loadImage(key: ImageKey): Promise<LoadedImage> {
-  const url = resolve('images', IMAGE_FILES[key]);
+  const url = key === 'diya'
+    ? resolveLanding(IMAGE_FILES[key])
+    : resolve('images', IMAGE_FILES[key]);
   if (url) {
     try {
       const img = await loadImageEl(url);

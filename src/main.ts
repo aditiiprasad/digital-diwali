@@ -78,6 +78,13 @@ async function boot() {
   const sparklers = new SparklerController(world, ui.toast);
 
   new DragDrop(scene, manager, sparklers, PATAKA_BY_KIND, images, ui.toast);
+  // Start with a neat, easy-to-grab line of diyas on the road.
+  const diyaCount = 5;
+  const diyaY = scene.roadTop + Math.min(42, (scene.roadBottom - scene.roadTop) * 0.28);
+  for (let i = 0; i < diyaCount; i++) {
+    const x = scene.width * (0.18 + (i / (diyaCount - 1)) * 0.64);
+    manager.place(PATAKA_BY_KIND.diya, x, diyaY, 0);
+  }
   scene.addBlocker(ui.social);
   const radio = new Radio(audio, scene.radioBtn, app, {
     toast: ui.toast,

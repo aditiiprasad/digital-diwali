@@ -386,6 +386,27 @@ function logo(): HTMLCanvasElement {
   return c;
 }
 
+function diya(): HTMLCanvasElement {
+  const [c, ctx] = canvas(180, 140);
+  ctx.fillStyle = '#b85f24';
+  ctx.beginPath();
+  ctx.ellipse(90, 100, 62, 24, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#e99a3d';
+  ctx.beginPath();
+  ctx.ellipse(90, 91, 56, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff2a1';
+  ctx.shadowColor = '#ffae3d';
+  ctx.shadowBlur = 22;
+  ctx.beginPath();
+  ctx.moveTo(90, 76);
+  ctx.bezierCurveTo(70, 52, 88, 34, 90, 16);
+  ctx.bezierCurveTo(116, 48, 108, 68, 90, 76);
+  ctx.fill();
+  return c;
+}
+
 export function fallbackImage(key: ImageKey): HTMLCanvasElement {
   switch (key) {
     case 'street': return street();
@@ -395,6 +416,7 @@ export function fallbackImage(key: ImageKey): HTMLCanvasElement {
     case 'chakri': return chakri();
     case 'atomBomb': return atomBomb();
     case 'fuljhadi': return fuljhadi();
+    case 'diya': return diya();
     case 'radio': return radio();
     case 'logo': return logo();
   }
