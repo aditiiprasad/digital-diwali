@@ -144,11 +144,32 @@ button {
   pointer-events: none;
 }
 
+.shop-movable {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  touch-action: none;
+  transform: translate3d(var(--shop-dx, 0px), var(--shop-dy, 0px), 0);
+  transition: filter 0.15s;
+}
+
+.shop-movable.moving {
+  filter: drop-shadow(0 0 12px rgba(255, 207, 107, 0.35));
+}
+
 .shop-img {
   display: block;
   width: 100%;
   filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55));
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.shop-img:active,
+.shop-movable.moving .shop-img {
+  cursor: grabbing;
 }
 
 /* --shop-w is set from JS (Scene.layout, see SHOP_SCALE). The shelf never
@@ -1243,11 +1264,17 @@ button {
     width: auto;
     display: block;
   }
+  .shop-movable {
+    position: absolute;
+    inset: 0;
+    transform: none;
+  }
   .shop-img {
     position: absolute;
     left: 2vw;
     width: var(--shop-w);
     bottom: calc(100% - var(--road-top) - 3vw);
+    transform: translate3d(var(--shop-dx, 0px), var(--shop-dy, 0px), 0);
   }
   .shelf {
     position: absolute;
@@ -1258,6 +1285,7 @@ button {
     min-width: 0;
     gap: 5px;
     padding: 7px 6px 8px;
+    transform: translate3d(var(--shop-dx, 0px), var(--shop-dy, 0px), 0);
   }
   .slot-art {
     height: clamp(40px, 11vw, 64px);

@@ -44,6 +44,19 @@ export class PatakaManager {
     return p;
   }
 
+  /** Update an unlit pataka while the player is arranging the road. */
+  move(p: Placed, x: number, y: number) {
+    if (p.state !== 'idle' && p.state !== 'landing') return;
+    p.state = 'idle';
+    p.x = x;
+    p.y = y;
+    p.hop = 0;
+    p.hopV = 0;
+    p.slideV = 0;
+    p.wobble = 0;
+    p.wobbleV = 0;
+  }
+
   /**
    * Topmost unlit pataka whose sprite box (plus padding) contains the point.
    * Items are drawn far-to-near (ascending y), so the largest y is on top.

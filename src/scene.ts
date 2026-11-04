@@ -39,6 +39,7 @@ export class Scene {
   readonly canvas: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
   readonly shopEl: HTMLDivElement;
+  readonly shopMoveEl: HTMLDivElement;
   readonly shopImg: HTMLImageElement;
   readonly shelf: HTMLDivElement;
   readonly slots: HTMLButtonElement[] = [];
@@ -86,8 +87,10 @@ export class Scene {
       <div class="layer layer-road"><div class="road-line"></div></div>
       <div class="road-zone" aria-hidden="true"></div>
       <div id="shop">
-        <img class="shop-img" alt="Pataka shop" draggable="false" />
-        <div class="shelf" role="toolbar" aria-label="Patakas — drag one onto the road"></div>
+        <div class="shop-movable">
+          <img class="shop-img" alt="Pataka shop — drag to move" draggable="false" />
+          <div class="shelf" role="toolbar" aria-label="Patakas — drag one onto the road"></div>
+        </div>
       </div>
       <div class="layer grade" aria-hidden="true"></div>
       <canvas id="fx" aria-hidden="true"></canvas>
@@ -104,6 +107,7 @@ export class Scene {
     this.streetLayer.style.backgroundImage = `url("${images.street.url}")`;
     this.roadZone = this.el.querySelector('.road-zone')!;
     this.shopEl = this.el.querySelector('#shop')!;
+    this.shopMoveEl = this.el.querySelector('.shop-movable')!;
     this.shopImg = this.el.querySelector('.shop-img')!;
     this.shopImg.src = images.shop.url;
     this.shelf = this.el.querySelector('.shelf')!;

@@ -3,6 +3,7 @@ import { clamp, MAX_PLACED, rand } from './config';
 import type { SparklerController } from './patakas/Fuljhadi';
 import type { PatakaManager } from './patakas/PatakaManager';
 import type { PatakaDef, PatakaKind } from './patakas/types';
+import type { Placed } from './patakas/types';
 import type { Scene } from './scene';
 
 interface DragState {
@@ -19,6 +20,25 @@ interface DragState {
   h: number;
 }
 
+interface PlacedDragState {
+  pointerId: number;
+  item: Placed;
+  x: number;
+  y: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+}
+
+interface ShopDragState {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  offsetX: number;
+  offsetY: number;
+  moved: boolean;
+}
+
 /** How far above its ground point a dropped pataka starts, as a fraction of its height. */
 const DROP_LIFT = 0.25;
 
@@ -29,6 +49,9 @@ const DROP_LIFT = 0.25;
  */
 export class DragDrop {
   private drag: DragState | null = null;
+  private placedDrag: PlacedDragState | null = null;
+  private shopDrag: ShopDragState | null = null;
+  private shopOffset = { x: 0, y: 0 };
 
   constructor(
     private scene: Scene,
@@ -56,17 +79,147 @@ export class DragDrop {
         else this.placeRandom(def);
       });
     }
+    this.loadShopPosition();
+    scene.shopImg.addEventListener('pointerdown', (e) => this.startShopDrag(e));
     window.addEventListener('pointermove', (e) => this.hover(e));
     document.documentElement.addEventListener('pointerleave', () => this.setHover(null, null));
     // Native HTML5 drag would hijack the pointer stream.
     scene.shelf.addEventListener('dragstart', (e) => e.preventDefault());
-    window.addEventListener('pointermove', (e) => this.move(e));
-    window.addEventListener('pointerup', (e) => this.end(e, false));
-    window.addEventListener('pointercancel', (e) => this.end(e, true));
+    window.addEventListener('pointermove', (e) => {
+      this.move(e);
+      this.movePlaced(e);
+      this.moveShop(e);
+    });
+    window.addEventListener('pointerup', (e) => {
+      this.end(e, false);
+      this.endPlaced(e, false);
+      this.endShop(e, false);
+    });
+    window.addEventListener('pointercancel', (e) => {
+      this.end(e, true);
+      this.endPlaced(e, true);
+      this.endShop(e, true);
+    });
     window.addEventListener('blur', () => {
       if (this.drag) this.end(new PointerEvent('pointercancel', { pointerId: this.drag.pointerId }), true);
     });
-    scene.el.addEventListener('pointerdown', (e) => this.tapToLight(e));
+    scene.el.addEventListener('pointerdown', (e) => {
+      if (!this.startPlacedDrag(e)) this.tapToLight(e);
+    });
+  }
+
+  private loadShopPosition() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('digital-diwali-shop-position') ?? 'null') as { x?: number; y?: number } | null;
+      if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+        this.shopOffset = { x: saved.x!, y: saved.y! };
+      }
+    } catch {
+      // Corrupt local storage should not prevent the scene from loading.
+    }
+    this.applyShopOffset();
+  }
+
+  private applyShopOffset() {
+    const { x, y } = this.shopOffset;
+    this.scene.shopMoveEl.style.setProperty('--shop-dx', `${x.toFixed(1)}px`);
+    this.scene.shopMoveEl.style.setProperty('--shop-dy', `${y.toFixed(1)}px`);
+  }
+
+  private startShopDrag(e: PointerEvent) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    this.shopDrag = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: this.shopOffset.x,
+      offsetY: this.shopOffset.y,
+      moved: false,
+    };
+    try {
+      this.scene.shopImg.setPointerCapture(e.pointerId);
+    } catch {
+      /* not supported for this pointer */
+    }
+  }
+
+  private moveShop(e: PointerEvent) {
+    const d = this.shopDrag;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.moved && Math.hypot(dx, dy) < 5) return;
+    d.moved = true;
+    const img = this.scene.shopImg;
+    const rect = img.getBoundingClientRect();
+    const baseLeft = rect.left - this.shopOffset.x;
+    const baseTop = rect.top - this.shopOffset.y;
+    const nextX = clamp(d.offsetX + dx, 8 - baseLeft, window.innerWidth - img.width - 8 - baseLeft);
+    const nextY = clamp(d.offsetY + dy, 8 - baseTop, window.innerHeight - img.height - 8 - baseTop);
+    this.shopOffset = { x: nextX, y: nextY };
+    this.applyShopOffset();
+    this.scene.shopMoveEl.classList.add('moving');
+  }
+
+  private endShop(e: PointerEvent, cancelled: boolean) {
+    const d = this.shopDrag;
+    if (!d || d.pointerId !== e.pointerId) return;
+    this.shopDrag = null;
+    this.scene.shopMoveEl.classList.remove('moving');
+    if (d.moved && !cancelled) {
+      localStorage.setItem('digital-diwali-shop-position', JSON.stringify(this.shopOffset));
+    } else if (cancelled) {
+      this.shopOffset = { x: d.offsetX, y: d.offsetY };
+      this.applyShopOffset();
+    }
+  }
+
+  private startPlacedDrag(e: PointerEvent) {
+    if (this.drag || this.shopDrag || e.pointerType === 'mouse' && e.button !== 0) return false;
+    if ((e.target as HTMLElement).closest('#shop, #radio, .radio-wrap')) return false;
+    const item = this.manager.hitTest(e.clientX, e.clientY);
+    if (!item) return false;
+    e.preventDefault();
+    this.placedDrag = {
+      pointerId: e.pointerId, item, x: item.x, y: item.y,
+      startX: e.clientX, startY: e.clientY, moved: false,
+    };
+    this.manager.hovered = null;
+    return true;
+  }
+
+  private movePlaced(e: PointerEvent) {
+    const d = this.placedDrag;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.moved && Math.hypot(dx, dy) < 5) return;
+    d.moved = true;
+    const y = clamp(d.y + dy, this.scene.roadTop + 2, this.scene.roadBottom);
+    const x = clamp(d.x + dx, 12, this.scene.width - 12);
+    this.manager.move(d.item, x, y);
+  }
+
+  private endPlaced(e: PointerEvent, cancelled: boolean) {
+    const d = this.placedDrag;
+    if (!d || d.pointerId !== e.pointerId) return;
+    this.placedDrag = null;
+    if (!d.moved && !cancelled) {
+      this.manager.light(d.item);
+      return;
+    }
+    if (d.moved && (!cancelled && this.isValidPlaced(d.item))) return;
+    this.manager.move(d.item, d.x, d.y);
+  }
+
+  private isValidPlaced(item: Placed) {
+    const s = this.scene;
+    const img = this.images[item.def.image];
+    const h = s.baseSize * item.def.heightMul * s.depthScale(item.y);
+    const w = (h * img.width) / img.height;
+    if (item.y < s.roadTop || item.y > s.roadBottom || item.x - w / 2 < 8 || item.x + w / 2 > s.width - 8) return false;
+    return !s.blockedRects().some((r) => item.x + w / 2 >= r.left && item.x - w / 2 <= r.right && item.y >= r.top && item.y - h <= r.bottom);
   }
 
   private start(e: PointerEvent, slot: HTMLElement) {
